@@ -1,9 +1,11 @@
 #include <vector>
 #include <algorithm>
+#include <cmath>
 #include <SFML/Graphics.hpp>
 #include <SFML/Graphics/Text.hpp>
 #include <fstream>
 #include <strstream>
+#include <string.h>
 #include <iostream>
 #include <time.h>
 
@@ -104,7 +106,7 @@ void SetCol(vector<triangle>& tris,color col) {
 		tris[i].col = col;
 	}
 }
-void SetColStacky(vector<triangle>& tris) {
+void SetColStaky(vector<triangle>& tris) {
 	for (int i = 0; i < tris.size(); i++) {
 		if (tris[i].p[0].y < -22) {
 			tris[i].col = { 200,20,10 };
@@ -472,23 +474,79 @@ void AddCactus(vector<mesh> &gnd) {
 		}
 		MoveObj(gnd[gnd.size() - 1].tris, 0, height, 0);
 }
+void add_score(const char *player_name, int score) {
+    FILE *file = fopen("score.txt", "a");
+    if (file == NULL) {
+        printf("Erreur d'ouverture du fichier.\n");
+        return;
+    }
 
+    // Écrit le nom du joueur et son score
+    fprintf(file, "%s %d\n", player_name, score);
+
+    fclose(file);
+}
+void get_top_5_scores(const char *player_name,int* max_score) {
+    FILE *file = fopen("score.txt", "r");  // Ouvre le fichier en mode lecture
+    if (file == NULL) {
+        printf("Erreur d'ouverture du fichier.\n");
+        return;
+    }
+
+    char name[100];
+    int score;
+    int scores[100];
+    int count = 0;
+
+    // Lit tous les scores du fichier et les enregistre pour le joueur spécifié
+    while (count<100&&fscanf(file, "%s %d", name, &score) != EOF) {
+        if (strcmp(name, player_name) == 0) {
+            scores[count++] = score;
+        }
+    }
+
+    fclose(file);
+
+    if (count == 0) {
+        printf("Aucun score trouvé pour %s.\n", player_name);
+        return;
+    }
+
+    for (int i = 0; i < count - 1; i++) {
+        for (int j = i + 1; j < count; j++) {
+            if (scores[i] < scores[j]) {
+                int temp = scores[i];
+                scores[i] = scores[j];
+                scores[j] = temp;
+            }
+        }
+    }
+	*max_score= scores[0];
+    printf("Les 5 meilleurs scores de %s sont :\n", player_name);
+    for (int i = 0; i < (count < 5 ? count : 5); i++) {
+        printf("%d\n", scores[i]);
+    }
+}
 int main()
 {
-	FILE* save_read;
-	fopen_s(&save_read, "save.txt", "r");
-	int max_score = 0;
-	fscanf_s(save_read, "%d", &max_score);
-	cout << max_score << endl;
-	double score = 0;
-	fclose(save_read);
+		printf("Nom d'Utilisateur ? (sensible a la casse): ");
 
+	const char* player_name;
+	scanf("%s",player_name);
 
+		int max_score = 0;
+	int score=0;
+	 char response;
+    printf("Voulez-vous voir vos 5 meilleurs scores ? (o/n) : ");
+    scanf(" %c", &response); 
+
+    if (response == 'o' || response == 'O') {
+        get_top_5_scores(player_name,&max_score);    
+	}
 start:
 	if (1) {
 		bool night = false;
-		FILE* save_w;
-		fopen_s(&save_w, "save.txt", "w+");
+		
 		srand(time(NULL));
 		sf::Text Score;
 		sf::Text HiScore;
@@ -526,15 +584,15 @@ start:
 		string filename;
 		int render_distance = 50;
 		printf("Choisisez la render distance (entre 5 et 100 unites subjectives, 50 par defaut): ");
-		scanf_s("%i", &render_distance);
+		scanf("%i", &render_distance);
 		if (render_distance > 100 || render_distance < 5) {
 			printf("He ho, un entier entre 5 et 100 j'avais dit \n");
 			render_distance = 50;
 		}
 		int diff = 1;
 		printf("Choisisez la difficulte entre 1 et 5 (1 par defaut): ");
-		scanf_s("%i", &diff);
-		printf("Attention, un stacki peut cacher un cactus !\n");
+		scanf("%i", &diff);
+		printf("Attention, un staki peut cacher un cactus !\n");
 
 		printf("Generating...\n");
 		if (diff < 1 || diff>5)
@@ -566,16 +624,16 @@ start:
 			}
 		}
 
-		mesh stackiBody;
+		mesh stakiBody;
 
-		LoadObjFile(stackiBody.tris, "stackiBody.obj");
+		LoadObjFile(stakiBody.tris, "stakiBody.obj");
 
-		ResizeObj(stackiBody.tris,0.0625 * 0.25);
-		SetCol(stackiBody.tris,{ 148,67,37 });
+		ResizeObj(stakiBody.tris,0.0625 * 0.25);
+		SetCol(stakiBody.tris,{ 148,67,37 });
 
-		SetColStacky(stackiBody.tris);
+		SetColStaky(stakiBody.tris);
 
-		gnd.push_back(stackiBody);
+		gnd.push_back(stakiBody);
 
 
 		for (int i = 0; i < 100*diff; i++) {
@@ -596,7 +654,7 @@ start:
 		vCam.y = 0;
 		float speed = 20;
 		double t = -0.0001;
-		double stacki_height_long = 1000;
+		double staki_height_long = 1000;
 		bool dead = false;
 
 		while (!dead && window.isOpen())
@@ -623,11 +681,11 @@ start:
 					AddCactus(gnd);
 				}
 			}
-			vCam.y = max(gnd_height - 150 + ((gnd_height - 150) - vCam.y) * fElapsedTime, min(gnd_height, vCam.y + VCam.y * fElapsedTime));
-			VCam.y = (VCam.y + (aCam.y * 20) * fElapsedTime);
+			vCam.y = max(gnd_height - 150 + ((gnd_height - 150) - vCam.y) * (float)0.02, min(gnd_height, vCam.y + VCam.y * (float)0.02));
+			VCam.y = (VCam.y + (aCam.y * 20) * 0.02);
 
 			sf::Event event;
-			vec3D vForwardCam = Vec3DTimeFloat(vCamPointDir , (8.0f * fElapsedTime));
+			vec3D vForwardCam = Vec3DTimeFloat(vCamPointDir , (8.0f * 0.02));
 			vForwardCam.y = 0;
 			vec3D vRightCam;
 
@@ -713,7 +771,7 @@ start:
 			double closest = 100000000000;
 			vector<triangle> vecTriangleToDraw;
 			int nb_tri = 1;
-			gnd[9] = stackiBody;
+			gnd[9] = stakiBody;
 			RotateObjZ(gnd[9].tris,rotateZ / 700);
 
 			RotateObjY(gnd[9].tris,-fCamYaw + 3.14159265 / 2);
@@ -724,8 +782,8 @@ start:
 
 			MoveObj(gnd[9].tris,vCam.x - gnd[9].tris[0].p[0].x + etpif, vCam.y - gnd[9].tris[0].p[0].y, vCam.z - gnd[9].tris[0].p[0].z - etpaf);
 			float shortest_sist_staky_gnd = 100000;
-			double stacki_height = 314;
-			double stacki_height_front = 314;
+			double staki_height = 314;
+			double staki_height_front = 314;
 
 			MoveObj(gnd[9].tris, vCamPointDir.x * 100, 0, vCamPointDir.z * 100);
 
@@ -735,7 +793,7 @@ start:
 				if (shortest_sist_staky_gnd > cur_dist) {
 					shortest_sist_staky_gnd = cur_dist;
 					double avg = gnd[9].tris[0].p[0].y + gnd[9].tris[0].p[1].y + gnd[9].tris[0].p[2].y;
-					stacki_height = avg / 3 - gnd[4].tris[i].p[0].y;
+					staki_height = avg / 3 - gnd[4].tris[i].p[0].y;
 
 				}
 			}
@@ -748,17 +806,17 @@ start:
 				if (shortest_sist_staky_gnd > cur_dist) {
 					shortest_sist_staky_gnd = cur_dist;
 					double avg = gnd[9].tris[0].p[0].y + gnd[9].tris[0].p[1].y + gnd[9].tris[0].p[2].y;
-					stacki_height_front = avg / 3 - gnd[4].tris[i].p[0].y;
+					staki_height_front = avg / 3 - gnd[4].tris[i].p[0].y;
 
 				}
 			}
 
-			stacki_height_long += fElapsedTime * 20 * (stacki_height - stacki_height_long);
+			staki_height_long += 0.02 * 20 * (staki_height - staki_height_long);
 
-			MoveObj(gnd[9].tris,0, -stacki_height_long - 10, 0);
-			rotateZ -= (rotateZ - (stacki_height_front - stacki_height)) * 10 * fElapsedTime;
-			stacki_height += stacki_height_front;
-			stacki_height /= 2;
+			MoveObj(gnd[9].tris,0, -staki_height_long - 10, 0);
+			rotateZ -= (rotateZ - (staki_height_front - staki_height)) * 10 * 0.02;
+			staki_height += staki_height_front;
+			staki_height /= 2;
 			gnd_height = 0;
 			MoveObj(gnd[9].tris, 0, min((float)0, (float)(-480 * (-(t - 0.5) * (t - 0.5) + 0.25))), 0);
 
@@ -872,8 +930,7 @@ start:
 		}
 		max_score = (int)max((float)score, (float)max_score);
 
-		fprintf(save_w, "%d", (int)max_score);
-		fclose(save_w);
+		add_score(player_name,max_score);
 
 	}
 
@@ -882,7 +939,7 @@ start:
 	score = 0;
 	printf("\n On repart pour un tour ? (1: Oui )\n");
 	int answ = 0;
-	scanf_s("%i", &answ);
+	scanf("%i", &answ);
 
 	if (answ == 1) {
 		goto start;
