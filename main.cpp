@@ -626,7 +626,7 @@ start:
 
 		mesh stakiBody;
 
-		LoadObjFile(stakiBody.tris, "stakiBody.obj");
+		LoadObjFile(stakiBody.tris, "stackiBody.obj");
 
 		ResizeObj(stakiBody.tris,0.0625 * 0.25);
 		SetCol(stakiBody.tris,{ 148,67,37 });
