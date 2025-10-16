@@ -51,8 +51,8 @@ bool LoadObjFile(vector<triangle> &tris,std::string sFilename) {
 		s << line;
 
 		char trash;
-
 		if (line[0] == 'v') {
+
 			vec3D v;
 			s >> trash >> v.x >> v.y >> v.z;
 			vertex.push_back(v);
@@ -531,7 +531,7 @@ int main()
 {
 		printf("Nom d'Utilisateur ? (sensible a la casse): ");
 
-	const char* player_name;
+        char* player_name = (char*)malloc(sizeof(char)*10);
 	scanf("%s",player_name);
 
 		int max_score = 0;
